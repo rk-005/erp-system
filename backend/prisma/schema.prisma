@@ -1,0 +1,167 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL")
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum Role {
+  ADMIN
+  SALES
+  WAREHOUSE
+  ACCOUNTS
+}
+
+enum CustomerType {
+  RETAIL
+  WHOLESALE
+  DISTRIBUTOR
+}
+
+enum CustomerStatus {
+  LEAD
+  ACTIVE
+  INACTIVE
+}
+
+enum MovementType {
+  IN
+  OUT
+}
+
+enum ChallanStatus {
+  DRAFT
+  CONFIRMED
+  CANCELLED
+}
+
+// ─── Models ───────────────────────────────────────────────────────────────────
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(SALES)
+  createdAt    DateTime @default(now())
+
+  // Relations
+  customerNotes  CustomerNote[]
+  stockMovements StockMovement[]
+  challans       Challan[]
+
+  @@map("users")
+}
+
+model Customer {
+  id           String         @id @default(cuid())
+  name         String
+  mobile       String
+  email        String?
+  businessName String
+  gstNumber    String?
+  customerType CustomerType   @default(RETAIL)
+  address      String
+  status       CustomerStatus @default(LEAD)
+  followUpDate DateTime?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  // Relations
+  notes    CustomerNote[]
+  challans Challan[]
+
+  @@map("customers")
+}
+
+model CustomerNote {
+  id         String   @id @default(cuid())
+  customerId String
+  note       String   @db.Text
+  authorId   String
+  createdAt  DateTime @default(now())
+
+  // Relations
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  author   User     @relation(fields: [authorId], references: [id])
+
+  @@map("customer_notes")
+}
+
+model Product {
+  id                String   @id @default(cuid())
+  name              String
+  sku               String   @unique
+  category          String
+  unitPrice         Decimal  @db.Decimal(10, 2)
+  currentStock      Int      @default(0)
+  minStockAlert     Int      @default(10)
+  warehouseLocation String
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  stockMovements StockMovement[]
+  challanItems   ChallanItem[]
+
+  // Note: currentStock >= 0 is enforced at application layer in challanService.ts
+  // and stockMovements.ts before any decrement operation
+  @@map("products")
+}
+
+model StockMovement {
+  id              String       @id @default(cuid())
+  productId       String
+  quantityChanged Int
+  movementType    MovementType
+  reason          String
+  createdById     String
+  createdAt       DateTime     @default(now())
+
+  // Relations
+  product     Product @relation(fields: [productId], references: [id])
+  createdBy   User    @relation(fields: [createdById], references: [id])
+
+  @@map("stock_movements")
+}
+
+model Challan {
+  id            String        @id @default(cuid())
+  challanNumber String        @unique
+  customerId    String
+  status        ChallanStatus @default(DRAFT)
+  totalQuantity Int           @default(0)
+  createdById   String
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  // Relations
+  customer  Customer      @relation(fields: [customerId], references: [id])
+  createdBy User          @relation(fields: [createdById], references: [id])
+  items     ChallanItem[]
+
+  @@map("challans")
+}
+
+model ChallanItem {
+  id              String  @id @default(cuid())
+  challanId       String
+  productId       String?
+  quantity        Int
+  productSnapshot Json    // Stores: { name, sku, unitPrice, category } at time of confirmation
+  lineTotal       Decimal @db.Decimal(10, 2)
+
+  // Relations
+  challan  Challan  @relation(fields: [challanId], references: [id], onDelete: Cascade)
+  product  Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@map("challan_items")
+}

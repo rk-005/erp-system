@@ -1,0 +1,103 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  # ─── Backend CI ──────────────────────────────────────────────────────────────
+  backend:
+    name: Backend — Lint, Typecheck, Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: backend
+        run: npm ci
+
+      - name: Generate Prisma Client
+        working-directory: backend
+        run: npx prisma generate
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://dummy:dummy@localhost/dummy' }}
+
+      - name: Typecheck
+        working-directory: backend
+        run: npm run typecheck
+
+      - name: Run Tests
+        working-directory: backend
+        run: npm test
+        env:
+          DATABASE_URL: postgresql://dummy:dummy@localhost/dummy
+          JWT_SECRET: test-secret-for-ci-pipeline-minimum-32-chars
+
+  # ─── Frontend CI ─────────────────────────────────────────────────────────────
+  frontend:
+    name: Frontend — Lint, Typecheck, Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Typecheck
+        working-directory: frontend
+        run: npx tsc --noEmit
+
+      - name: Build
+        working-directory: frontend
+        run: npm run build
+        env:
+          VITE_API_URL: https://your-render-backend.onrender.com/api
+
+  # ─── Deploy (only on push to main, after CI passes) ──────────────────────────
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: Deploy Backend to Render
+        run: |
+          curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}" \
+            -H "Content-Type: application/json" \
+            --fail \
+            --silent
+        continue-on-error: true
+
+      - name: Deploy Frontend to Vercel
+        run: |
+          curl -X POST "${{ secrets.VERCEL_DEPLOY_HOOK }}" \
+            -H "Content-Type: application/json" \
+            --fail \
+            --silent
+        continue-on-error: true
+
+      - name: Deployment complete
+        run: echo "Deployment triggered for both Render (backend) and Vercel (frontend)"

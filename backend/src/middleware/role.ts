@@ -56,8 +56,8 @@ export const ROLES = {
   STOCK_MANAGERS: [Role.ADMIN, Role.WAREHOUSE] as Role[],
   /** Admin + Sales (challan operations) */
   CHALLAN_MANAGERS: [Role.ADMIN, Role.SALES] as Role[],
-  /** Admin + Sales (customer CRM write operations) */
-  CRM_WRITERS: [Role.ADMIN, Role.SALES] as Role[],
+  /** Admin + Sales + Accounts (customer CRM write operations) */
+  CRM_WRITERS: [Role.ADMIN, Role.SALES, Role.ACCOUNTS] as Role[],
   /** Everyone except WAREHOUSE for customer reads */
   CUSTOMER_READERS: [Role.ADMIN, Role.SALES, Role.ACCOUNTS] as Role[],
 };

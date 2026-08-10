@@ -40,7 +40,7 @@ export const CustomerDetailPage: React.FC = () => {
   const [note, setNote] = useState('');
   const [addingNote, setAddingNote] = useState(false);
 
-  const canWrite = isRole('ADMIN', 'SALES');
+  const canWrite = isRole('ADMIN', 'SALES', 'ACCOUNTS');
 
   const fetchCustomer = useCallback(async () => {
     try {

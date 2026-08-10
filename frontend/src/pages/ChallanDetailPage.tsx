@@ -17,6 +17,7 @@ interface ChallanDetail {
   createdBy: { name: string; role: string };
   items: {
     id: string;
+    productId?: string | null;
     quantity: number;
     lineTotal: string;
     productSnapshot: { name: string; sku: string; unitPrice: string; category: string };
@@ -38,6 +39,20 @@ export const ChallanDetailPage: React.FC = () => {
   const [cancelling, setCancelling] = useState(false);
   const [stockErrors, setStockErrors] = useState<unknown[]>([]);
 
+  const [isEditing, setIsEditing] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+  const [editableItems, setEditableItems] = useState<{
+    productId: string;
+    quantity: number;
+    productSnapshot: { name: string; sku: string; unitPrice: string; category: string };
+    currentStock: number;
+  }[]>([]);
+  const [productSearch, setProductSearch] = useState('');
+  const [searchedProducts, setSearchedProducts] = useState<{
+    id: string; name: string; sku: string; unitPrice: string; currentStock: number; category: string;
+  }[]>([]);
+  const [savingEdit, setSavingEdit] = useState(false);
+
   const canManage = isRole('ADMIN', 'SALES');
 
   const fetchChallan = useCallback(async () => {
@@ -52,6 +67,99 @@ export const ChallanDetailPage: React.FC = () => {
   }, [id]);
 
   useEffect(() => { fetchChallan(); }, [fetchChallan]);
+
+  // Fetch products for adding during edit
+  useEffect(() => {
+    if (!isEditing || !productSearch) {
+      setSearchedProducts([]);
+      return;
+    }
+    const delayDebounce = setTimeout(async () => {
+      try {
+        const res = await api.get(`/products?limit=10&search=${productSearch}`);
+        setSearchedProducts(res.data.data);
+      } catch (err) {
+        console.error(err);
+      }
+    }, 300);
+    return () => clearTimeout(delayDebounce);
+  }, [productSearch, isEditing]);
+
+  const handleStartEdit = () => {
+    if (!challan) return;
+    setEditableItems(
+      challan.items.map((item) => ({
+        productId: item.product?.id || item.productId,
+        quantity: item.quantity,
+        productSnapshot: item.productSnapshot,
+        currentStock: item.product?.currentStock ?? 9999, // default if deleted
+      }))
+    );
+    setIsEditing(true);
+    setStockErrors([]);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setProductSearch('');
+  };
+
+  const handleUpdateQuantity = (productId: string, qty: number) => {
+    setEditableItems((prev) =>
+      prev.map((item) =>
+        item.productId === productId ? { ...item, quantity: Math.max(1, qty) } : item
+      )
+    );
+  };
+
+  const handleRemoveItem = (productId: string) => {
+    setEditableItems((prev) => prev.filter((item) => item.productId !== productId));
+  };
+
+  const handleAddProduct = (prod: typeof searchedProducts[0]) => {
+    if (editableItems.some((item) => item.productId === prod.id)) {
+      toast('Product already in challan.');
+      return;
+    }
+    setEditableItems((prev) => [
+      ...prev,
+      {
+        productId: prod.id,
+        quantity: 1,
+        productSnapshot: {
+          name: prod.name,
+          sku: prod.sku,
+          unitPrice: prod.unitPrice,
+          category: prod.category,
+        },
+        currentStock: prod.currentStock,
+      },
+    ]);
+    setProductSearch('');
+  };
+
+  const handleSaveEdit = async () => {
+    if (editableItems.length === 0) {
+      toast.error('Challan must contain at least one item');
+      return;
+    }
+    setSavingEdit(true);
+    try {
+      await api.patch(`/challans/${id}`, {
+        items: editableItems.map((i) => ({
+          productId: i.productId,
+          quantity: i.quantity,
+        })),
+      });
+      toast.success('Challan draft updated');
+      setIsEditing(false);
+      fetchChallan();
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setSavingEdit(false);
+    }
+  };
 
   const handleConfirm = async () => {
     setConfirming(true);
@@ -90,17 +198,17 @@ export const ChallanDetailPage: React.FC = () => {
   const handleDownloadPDF = () => {
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
     const token = localStorage.getItem('erp_token');
-    // Open in new tab with auth — browser download handles it
     window.open(`${API_URL}/challans/${id}/pdf?token=${token}`, '_blank');
-    // Note: In production use proper auth headers via fetch + blob download
-    // For now using query param approach for simplicity
     toast.success('PDF download started');
   };
 
-  const grandTotal = challan?.items.reduce(
-    (sum, item) => sum + parseFloat(item.lineTotal),
-    0
-  ) ?? 0;
+  const grandTotal = isEditing
+    ? editableItems.reduce((sum, item) => sum + parseFloat(item.productSnapshot.unitPrice) * item.quantity, 0)
+    : challan?.items.reduce((sum, item) => sum + parseFloat(item.lineTotal), 0) ?? 0;
+
+  const totalQuantity = isEditing
+    ? editableItems.reduce((sum, item) => sum + item.quantity, 0)
+    : challan?.totalQuantity ?? 0;
 
   if (isLoading) {
     return (
@@ -118,7 +226,7 @@ export const ChallanDetailPage: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-4">
         <div className="flex items-center gap-3">
-          <button onClick={() => navigate('/challans')} className="btn-ghost p-2">
+          <button onClick={() => navigate('/challans')} className="btn-ghost p-2" disabled={isEditing}>
             <ArrowLeft className="w-4 h-4" />
           </button>
           <div>
@@ -130,39 +238,58 @@ export const ChallanDetailPage: React.FC = () => {
           </div>
         </div>
         <div className="flex gap-2 sm:ml-auto flex-wrap">
-          <button onClick={handleDownloadPDF} className="btn-secondary">
-            <Download className="w-4 h-4" />
-            PDF
-          </button>
-          {canManage && challan.status === 'DRAFT' && (
+          {!isEditing ? (
             <>
-              <button
-                onClick={handleConfirm}
-                disabled={confirming}
-                className="btn-primary"
-              >
-                {confirming ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <CheckCircle className="w-4 h-4" />}
-                Confirm
-              </button>
-              <button
-                onClick={handleCancel}
-                disabled={cancelling}
-                className="btn-danger"
-              >
-                <XCircle className="w-4 h-4" />
+               <button onClick={() => setShowPreview(true)} className="btn-secondary">
+                 👁️ Preview
+               </button>
+               <button onClick={handleDownloadPDF} className="btn-secondary">
+                 <Download className="w-4 h-4" />
+                 Download
+               </button>
+              {canManage && challan.status === 'DRAFT' && (
+                <>
+                  <button onClick={handleStartEdit} className="btn-secondary">
+                    ✏️ Edit Draft
+                  </button>
+                  <button
+                    onClick={handleConfirm}
+                    disabled={confirming}
+                    className="btn-primary"
+                  >
+                    {confirming ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+                    Confirm
+                  </button>
+                  <button
+                    onClick={handleCancel}
+                    disabled={cancelling}
+                    className="btn-danger"
+                  >
+                    <XCircle className="w-4 h-4" />
+                    Cancel
+                  </button>
+                </>
+              )}
+              {canManage && challan.status === 'CONFIRMED' && (
+                <button
+                  onClick={handleCancel}
+                  disabled={cancelling}
+                  className="btn-danger"
+                >
+                  <XCircle className="w-4 h-4" />
+                  Cancel & Restore Stock
+                </button>
+              )}
+            </>
+          ) : (
+            <>
+              <button onClick={handleCancelEdit} disabled={savingEdit} className="btn-secondary">
                 Cancel
               </button>
+              <button onClick={handleSaveEdit} disabled={savingEdit} className="btn-primary">
+                {savingEdit ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : '💾 Save Changes'}
+              </button>
             </>
-          )}
-          {canManage && challan.status === 'CONFIRMED' && (
-            <button
-              onClick={handleCancel}
-              disabled={cancelling}
-              className="btn-danger"
-            >
-              <XCircle className="w-4 h-4" />
-              Cancel & Restore Stock
-            </button>
           )}
         </div>
       </div>
@@ -188,6 +315,44 @@ export const ChallanDetailPage: React.FC = () => {
         </div>
       )}
 
+      {/* Search Product (only shown when editing draft) */}
+      {isEditing && (
+        <div className="glass-card p-4">
+          <label className="text-xs font-semibold text-muted-foreground block mb-2">Search and add more products to this draft</label>
+          <div className="relative">
+            <Package className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="Search products to add..."
+              value={productSearch}
+              onChange={(e) => setProductSearch(e.target.value)}
+              className="input-field pl-9"
+            />
+          </div>
+          {productSearch && (
+            <div className="mt-2 border border-border rounded-lg overflow-hidden max-h-48 overflow-y-auto">
+              {searchedProducts.map((p) => (
+                <div
+                  key={p.id}
+                  onClick={() => handleAddProduct(p)}
+                  className="flex items-center justify-between p-3 hover:bg-secondary cursor-pointer border-b border-border/50 last:border-0"
+                >
+                  <div>
+                    <p className="text-sm font-medium text-foreground">{p.name}</p>
+                    <p className="text-xs text-muted-foreground">{p.sku} · Stock: {p.currentStock}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-medium text-foreground">{formatCurrency(parseFloat(p.unitPrice))}</p>
+                    <span className="text-xs text-primary">+ Add</span>
+                  </div>
+                </div>
+              ))}
+              {searchedProducts.length === 0 && <p className="p-3 text-center text-muted-foreground text-sm">No products found</p>}
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Items table */}
         <div className="lg:col-span-2 space-y-4">
@@ -204,41 +369,93 @@ export const ChallanDetailPage: React.FC = () => {
                     <th className="text-left p-4 font-medium hidden sm:table-cell">Unit Price</th>
                     <th className="text-left p-4 font-medium">Qty</th>
                     <th className="text-left p-4 font-medium">Total</th>
+                    {isEditing && <th className="w-8" />}
                   </tr>
                 </thead>
                 <tbody>
-                  {challan.items.map((item, idx) => {
-                    const snapshot = item.productSnapshot;
-                    return (
-                      <tr key={item.id} className="border-b border-border/30">
-                        <td className="p-4 text-muted-foreground">{idx + 1}</td>
-                        <td className="p-4">
-                          <p className="font-medium text-foreground">{snapshot.name}</p>
-                          <p className="text-xs text-muted-foreground font-mono">{snapshot.sku}</p>
-                          <span className="text-xs bg-secondary text-muted-foreground px-1.5 py-0.5 rounded mt-0.5 inline-block">
-                            {snapshot.category}
-                          </span>
-                        </td>
-                        <td className="p-4 hidden sm:table-cell text-muted-foreground">
-                          {formatCurrency(parseFloat(snapshot.unitPrice))}
-                        </td>
-                        <td className="p-4 font-medium text-foreground">{item.quantity}</td>
-                        <td className="p-4 font-semibold text-foreground">
-                          {formatCurrency(parseFloat(item.lineTotal))}
-                        </td>
-                      </tr>
-                    );
-                  })}
+                  {!isEditing ? (
+                    challan.items.map((item, idx) => {
+                      const snapshot = item.productSnapshot;
+                      return (
+                        <tr key={item.id} className="border-b border-border/30">
+                          <td className="p-4 text-muted-foreground">{idx + 1}</td>
+                          <td className="p-4">
+                            <p className="font-medium text-foreground">{snapshot.name}</p>
+                            <p className="text-xs text-muted-foreground font-mono">{snapshot.sku}</p>
+                            <span className="text-xs bg-secondary text-muted-foreground px-1.5 py-0.5 rounded mt-0.5 inline-block">
+                              {snapshot.category}
+                            </span>
+                          </td>
+                          <td className="p-4 hidden sm:table-cell text-muted-foreground">
+                            {formatCurrency(parseFloat(snapshot.unitPrice))}
+                          </td>
+                          <td className="p-4 font-medium text-foreground">{item.quantity}</td>
+                          <td className="p-4 font-semibold text-foreground">
+                            {formatCurrency(parseFloat(item.lineTotal))}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  ) : (
+                    editableItems.map((item, idx) => {
+                      const snapshot = item.productSnapshot;
+                      const lineTotal = parseFloat(snapshot.unitPrice) * item.quantity;
+                      return (
+                        <tr key={item.productId} className="border-b border-border/30">
+                          <td className="p-4 text-muted-foreground">{idx + 1}</td>
+                          <td className="p-4">
+                            <p className="font-medium text-foreground">{snapshot.name}</p>
+                            <p className="text-xs text-muted-foreground font-mono">{snapshot.sku}</p>
+                          </td>
+                          <td className="p-4 hidden sm:table-cell text-muted-foreground">
+                            {formatCurrency(parseFloat(snapshot.unitPrice))}
+                          </td>
+                          <td className="p-4">
+                            <input
+                              type="number"
+                              value={item.quantity}
+                              onChange={(e) => handleUpdateQuantity(item.productId, parseInt(e.target.value) || 1)}
+                              min="1"
+                              className="input-field w-20 text-center"
+                            />
+                            <div className="mt-1 text-center">
+                              {item.quantity > item.currentStock ? (
+                                <span className="text-[10px] text-red-400 font-semibold block">
+                                  Exceeds stock ({item.currentStock})
+                                </span>
+                              ) : (
+                                <span className="text-[10px] text-green-400 block">
+                                  Stock: {item.currentStock}
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="p-4 font-semibold text-foreground">
+                            {formatCurrency(lineTotal)}
+                          </td>
+                          <td className="p-4">
+                            <button
+                              onClick={() => handleRemoveItem(item.productId)}
+                              className="text-muted-foreground hover:text-destructive"
+                            >
+                              ❌
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
                 </tbody>
                 <tfoot>
                   <tr className="border-t-2 border-border">
                     <td colSpan={3} className="p-4 text-muted-foreground text-sm">
-                      {challan.items.length} products · {challan.totalQuantity} total qty
+                      {isEditing ? editableItems.length : challan.items.length} products · {totalQuantity} total qty
                     </td>
                     <td colSpan={2} className="p-4">
                       <p className="text-xs text-muted-foreground">Grand Total</p>
                       <p className="text-xl font-bold text-foreground">{formatCurrency(grandTotal)}</p>
                     </td>
+                    {isEditing && <td />}
                   </tr>
                 </tfoot>
               </table>
@@ -290,6 +507,33 @@ export const ChallanDetailPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* PDF Preview Modal */}
+      {showPreview && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in">
+          <div className="bg-card border border-border rounded-xl w-full max-w-4xl h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+            <div className="p-4 border-b border-border flex items-center justify-between bg-card shrink-0">
+              <div>
+                <h3 className="font-semibold text-foreground">Invoice Preview — {challan.challanNumber}</h3>
+                <p className="text-xs text-muted-foreground">Generated by PDFKit engine</p>
+              </div>
+              <button
+                onClick={() => setShowPreview(false)}
+                className="btn-secondary px-3 py-1 text-xs"
+              >
+                Close ✕
+              </button>
+            </div>
+            <div className="flex-1 bg-secondary/30 p-2 min-h-0">
+              <iframe
+                src={`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/challans/${id}/pdf?token=${localStorage.getItem('erp_token')}&inline=true`}
+                className="w-full h-full rounded border border-border bg-white"
+                title="Challan PDF Preview"
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

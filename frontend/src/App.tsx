@@ -12,6 +12,7 @@ import { ProductsPage } from './pages/ProductsPage';
 import { ChallansPage } from './pages/ChallansPage';
 import { NewChallanPage } from './pages/NewChallanPage';
 import { ChallanDetailPage } from './pages/ChallanDetailPage';
+import { WarehousePage } from './pages/WarehousePage';
 
 function App() {
   return (
@@ -118,7 +119,7 @@ function App() {
             element={
               <ProtectedRoute roles={['ADMIN', 'WAREHOUSE']}>
                 <AppLayout>
-                  <ProductsPage />
+                  <WarehousePage />
                 </AppLayout>
               </ProtectedRoute>
             }

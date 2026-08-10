@@ -294,9 +294,19 @@ export const NewChallanPage: React.FC = () => {
                               value={item.quantity}
                               onChange={(e) => updateQuantity(item.productId, parseInt(e.target.value) || 1)}
                               min="1"
-                              max={item.product.currentStock}
                               className="input-field w-24 text-center"
                             />
+                            <div className="mt-1 text-center">
+                              {item.quantity > item.product.currentStock ? (
+                                <span className="text-[10px] text-red-400 font-semibold block">
+                                  Exceeds stock ({item.product.currentStock})
+                                </span>
+                              ) : (
+                                <span className="text-[10px] text-green-400 block">
+                                  Stock: {item.product.currentStock}
+                                </span>
+                              )}
+                            </div>
                           </td>
                           <td className="p-4 font-semibold text-foreground">
                             {formatCurrency(lineTotal)}

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Search, Plus, ChevronRight, Phone, Mail, Building2, RefreshCw } from 'lucide-react';
+import { Search, Plus, ChevronRight, Phone, Mail, Building2, RefreshCw, Users } from 'lucide-react';
 import { api, getErrorMessage } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import { formatDate } from '../lib/utils';
@@ -181,7 +181,7 @@ export const CustomersPage: React.FC = () => {
   const [modalOpen, setModalOpen] = useState(searchParams.get('new') === 'true');
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
 
-  const canWrite = isRole('ADMIN', 'SALES');
+  const canWrite = isRole('ADMIN', 'SALES', 'ACCOUNTS');
   const LIMIT = 15;
 
   const fetchCustomers = useCallback(async () => {

@@ -337,10 +337,11 @@ challansRouter.get(
       // Generate PDF using pdfkit
       const doc = new PDFDocument({ margin: 50 });
 
+      const inline = req.query.inline === 'true';
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader(
         'Content-Disposition',
-        `attachment; filename="challan-${challan.challanNumber}.pdf"`
+        `${inline ? 'inline' : 'attachment'}; filename="challan-${challan.challanNumber}.pdf"`
       );
       doc.pipe(res);
 

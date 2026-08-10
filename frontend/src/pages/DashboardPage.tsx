@@ -41,14 +41,18 @@ export const DashboardPage: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [customersRes, productsRes, challansRes, lowStockRes] = await Promise.all([
-          api.get('/customers?limit=1'),
+        const hasCustomerAccess = user?.role !== 'WAREHOUSE';
+
+        const promises = [
+          hasCustomerAccess ? api.get('/customers?limit=1') : Promise.resolve(null),
           api.get('/products?limit=1'),
           api.get('/challans?limit=100'),
           api.get('/products/low-stock'),
-        ]);
+        ];
 
-        const challans = challansRes.data.data as { status: string; createdAt: string }[];
+        const [customersRes, productsRes, challansRes, lowStockRes] = await Promise.all(promises);
+
+        const challans = challansRes ? (challansRes.data.data as { status: string; createdAt: string }[]) : [];
         const oneWeekAgo = new Date();
         oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
@@ -58,13 +62,13 @@ export const DashboardPage: React.FC = () => {
         ).length;
 
         setStats({
-          totalCustomers: customersRes.data.pagination.total,
+          totalCustomers: customersRes ? customersRes.data.pagination.total : 0,
           activeCustomers: 0,
           totalProducts: productsRes.data.pagination.total,
           lowStockCount: lowStockRes.data.data.length,
           draftChallans,
           confirmedChallansThisWeek: confirmedThisWeek,
-          totalChallans: challansRes.data.pagination?.total || challans.length,
+          totalChallans: challansRes ? (challansRes.data.pagination?.total || challans.length) : 0,
         });
 
         setLowStockProducts(lowStockRes.data.data.slice(0, 5));
@@ -76,7 +80,9 @@ export const DashboardPage: React.FC = () => {
     };
 
     fetchData();
-  }, []);
+  }, [user]);
+
+  const hasCustomerAccess = user?.role !== 'WAREHOUSE';
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -105,21 +111,23 @@ export const DashboardPage: React.FC = () => {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className={`grid grid-cols-1 sm:grid-cols-2 ${user?.role === 'ACCOUNTS' || user?.role === 'WAREHOUSE' ? 'lg:grid-cols-3' : 'lg:grid-cols-4'} gap-4`}>
         {isLoading ? (
-          Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)
+          Array.from({ length: user?.role === 'ACCOUNTS' || user?.role === 'WAREHOUSE' ? 3 : 4 }).map((_, i) => <SkeletonCard key={i} />)
         ) : (
           <>
-            <Link to="/customers" className="stat-card hover:scale-[1.01] transition-transform">
-              <div className="flex items-center justify-between mb-3">
-                <div className="p-2 rounded-lg bg-blue-500/15">
-                  <Users className="w-5 h-5 text-blue-400" />
+            {hasCustomerAccess && (
+              <Link to="/customers" className="stat-card hover:scale-[1.01] transition-transform">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="p-2 rounded-lg bg-blue-500/15">
+                    <Users className="w-5 h-5 text-blue-400" />
+                  </div>
+                  <span className="text-xs text-muted-foreground">Total</span>
                 </div>
-                <span className="text-xs text-muted-foreground">Total</span>
-              </div>
-              <p className="text-3xl font-bold text-foreground">{stats?.totalCustomers ?? 0}</p>
-              <p className="text-sm text-muted-foreground mt-1">Customers</p>
-            </Link>
+                <p className="text-3xl font-bold text-foreground">{stats?.totalCustomers ?? 0}</p>
+                <p className="text-sm text-muted-foreground mt-1">Customers</p>
+              </Link>
+            )}
 
             <Link to="/products" className="stat-card hover:scale-[1.01] transition-transform">
               <div className="flex items-center justify-between mb-3">
@@ -132,18 +140,20 @@ export const DashboardPage: React.FC = () => {
               <p className="text-sm text-muted-foreground mt-1">In catalog</p>
             </Link>
 
-            <Link to="/products?lowStock=true" className={`stat-card hover:scale-[1.01] transition-transform ${(stats?.lowStockCount ?? 0) > 0 ? 'border-red-500/30 hover:border-red-500/50' : ''}`}>
-              <div className="flex items-center justify-between mb-3">
-                <div className={`p-2 rounded-lg ${(stats?.lowStockCount ?? 0) > 0 ? 'bg-red-500/15' : 'bg-green-500/15'}`}>
-                  <AlertTriangle className={`w-5 h-5 ${(stats?.lowStockCount ?? 0) > 0 ? 'text-red-400' : 'text-green-400'}`} />
+            {user?.role !== 'ACCOUNTS' && (
+              <Link to="/products?lowStock=true" className={`stat-card hover:scale-[1.01] transition-transform ${(stats?.lowStockCount ?? 0) > 0 ? 'border-red-500/30 hover:border-red-500/50' : ''}`}>
+                <div className="flex items-center justify-between mb-3">
+                  <div className={`p-2 rounded-lg ${(stats?.lowStockCount ?? 0) > 0 ? 'bg-red-500/15' : 'bg-green-500/15'}`}>
+                    <AlertTriangle className={`w-5 h-5 ${(stats?.lowStockCount ?? 0) > 0 ? 'text-red-400' : 'text-green-400'}`} />
+                  </div>
+                  <span className="text-xs text-muted-foreground">Alert</span>
                 </div>
-                <span className="text-xs text-muted-foreground">Alert</span>
-              </div>
-              <p className={`text-3xl font-bold ${(stats?.lowStockCount ?? 0) > 0 ? 'text-red-400' : 'text-green-400'}`}>
-                {stats?.lowStockCount ?? 0}
-              </p>
-              <p className="text-sm text-muted-foreground mt-1">Low stock items</p>
-            </Link>
+                <p className={`text-3xl font-bold ${(stats?.lowStockCount ?? 0) > 0 ? 'text-red-400' : 'text-green-400'}`}>
+                  {stats?.lowStockCount ?? 0}
+                </p>
+                <p className="text-sm text-muted-foreground mt-1">Low stock items</p>
+              </Link>
+            )}
 
             <Link to="/challans" className="stat-card hover:scale-[1.01] transition-transform">
               <div className="flex items-center justify-between mb-3">
@@ -160,7 +170,7 @@ export const DashboardPage: React.FC = () => {
       </div>
 
       {/* Quick Actions + Low Stock */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className={`grid grid-cols-1 ${user?.role === 'ACCOUNTS' ? 'lg:grid-cols-2' : 'lg:grid-cols-3'} gap-6`}>
         {/* Quick Actions */}
         <div className="glass-card p-6">
           <h3 className="font-semibold text-foreground mb-4">Quick Actions</h3>
@@ -218,53 +228,55 @@ export const DashboardPage: React.FC = () => {
           )}
         </div>
 
-        {/* Low Stock Alert */}
-        <div className="glass-card p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-foreground">Low Stock Alert</h3>
-            {(stats?.lowStockCount ?? 0) > 0 && (
-              <span className="text-xs bg-red-500/20 text-red-400 border border-red-500/30 px-2 py-0.5 rounded-full">
-                {stats?.lowStockCount} items
-              </span>
-            )}
-          </div>
-          {isLoading ? (
-            <div className="space-y-2">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="skeleton h-8 rounded" />
-              ))}
-            </div>
-          ) : lowStockProducts.length === 0 ? (
-            <div className="text-center py-6">
-              <CheckCircle className="w-8 h-8 text-green-400 mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground">All products are well-stocked</p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {lowStockProducts.map((product) => (
-                <Link
-                  key={product.id}
-                  to={`/products/${product.id}`}
-                  className="flex items-center justify-between p-2 rounded-lg hover:bg-secondary/50 transition-colors"
-                >
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-foreground truncate">{product.name}</p>
-                    <p className="text-xs text-muted-foreground">{product.sku}</p>
-                  </div>
-                  <div className="text-right shrink-0 ml-2">
-                    <p className="text-sm font-bold text-red-400">{product.currentStock}</p>
-                    <p className="text-xs text-muted-foreground">/ {product.minStockAlert} min</p>
-                  </div>
-                </Link>
-              ))}
-              {(stats?.lowStockCount ?? 0) > 5 && (
-                <Link to="/products?lowStock=true" className="text-xs text-primary hover:underline block text-center pt-1">
-                  View all {stats?.lowStockCount} low stock items →
-                </Link>
+        {/* Low Stock Alert (Hidden for Accounts role) */}
+        {user?.role !== 'ACCOUNTS' && (
+          <div className="glass-card p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-foreground">Low Stock Alert</h3>
+              {(stats?.lowStockCount ?? 0) > 0 && (
+                <span className="text-xs bg-red-500/20 text-red-400 border border-red-500/30 px-2 py-0.5 rounded-full">
+                  {stats?.lowStockCount} items
+                </span>
               )}
             </div>
-          )}
-        </div>
+            {isLoading ? (
+              <div className="space-y-2">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="skeleton h-8 rounded" />
+                ))}
+              </div>
+            ) : lowStockProducts.length === 0 ? (
+              <div className="text-center py-6">
+                <CheckCircle className="w-8 h-8 text-green-400 mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground">All products are well-stocked</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {lowStockProducts.map((product) => (
+                  <Link
+                    key={product.id}
+                    to={`/products/${product.id}`}
+                    className="flex items-center justify-between p-2 rounded-lg hover:bg-secondary/50 transition-colors"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-foreground truncate">{product.name}</p>
+                      <p className="text-xs text-muted-foreground">{product.sku}</p>
+                    </div>
+                    <div className="text-right shrink-0 ml-2">
+                      <p className="text-sm font-bold text-red-400">{product.currentStock}</p>
+                      <p className="text-xs text-muted-foreground">/ {product.minStockAlert} min</p>
+                    </div>
+                  </Link>
+                ))}
+                {(stats?.lowStockCount ?? 0) > 5 && (
+                  <Link to="/products?lowStock=true" className="text-xs text-primary hover:underline block text-center pt-1">
+                    View all {stats?.lowStockCount} low stock items →
+                  </Link>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  # Local database service (for fully offline local execution if needed)
+  postgres:
+    image: postgres:15-alpine
+    container_name: erp-postgres
+    environment:
+      POSTGRES_USER: erp_user
+      POSTGRES_PASSWORD: erp_password
+      POSTGRES_DB: erp_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  # Backend Service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: erp-backend
+    ports:
+      - "5000:5000"
+    environment:
+      DATABASE_URL: postgresql://erp_user:erp_password@postgres:5432/erp_db
+      JWT_SECRET: test-secret-for-docker-minimum-32-chars-key
+      JWT_EXPIRES_IN: 2h
+      PORT: 5000
+      NODE_ENV: production
+      FRONTEND_URL: http://localhost
+    depends_on:
+      - postgres
+
+  # Frontend Service (Static HTML/JS served via Nginx)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: erp-frontend
+    ports:
+      - "80:80"
+    environment:
+      VITE_API_URL: http://localhost:5000/api
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:

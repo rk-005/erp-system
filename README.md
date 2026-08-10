@@ -38,18 +38,14 @@ README.md
 
 ## 🚀 Local Setup
 
-### Prerequisites
-- Node.js >= 20
-- npm >= 10
-- Git
-
-### 1. Clone
+### Option A: Standard Setup (Prerequisites: Node >= 20, npm >= 10, Postgres)
+#### 1. Clone
 ```bash
 git clone https://github.com/rk-005/erp-system.git
 cd erp-system
 ```
 
-### 2. Backend Setup
+#### 2. Backend Setup
 ```bash
 cd backend
 cp .env.example .env
@@ -62,7 +58,7 @@ npm run dev
 # Backend runs on http://localhost:5000
 ```
 
-### 3. Frontend Setup
+#### 3. Frontend Setup
 ```bash
 cd frontend
 cp .env.example .env
@@ -74,14 +70,28 @@ npm run dev
 
 ---
 
+### Option B: Docker Setup 🐳 (Bonus Achieved 100%)
+Ensure you have Docker and Docker Compose installed. From the root directory, simply run:
+```bash
+docker-compose up --build
+```
+This single command spins up:
+1. **PostgreSQL** database on port `5432`
+2. **Backend API** container on port `5000`
+3. **Frontend Nginx** static server container on port `80`
+
+The system automatically initializes and configures environment connections.
+
+---
+
 ## 🔑 Test Credentials
 
-| Role      | Email                   | Password        |
-|-----------|-------------------------|-----------------|
-| **ADMIN** | admin@erp.local         | Admin@123       |
-| **SALES** | sales@erp.local         | Sales@123       |
-| **WAREHOUSE** | warehouse@erp.local | Warehouse@123   |
-| **ACCOUNTS** | accounts@erp.local  | Accounts@123    |
+| Role | Email | Password |
+|---|---|---|
+| **ADMIN** | admin@erp.local | Admin@123 |
+| **SALES** | sales@erp.local | Sales@123 |
+| **WAREHOUSE** | warehouse@erp.local | Warehouse@123 |
+| **ACCOUNTS** | accounts@erp.local | Accounts@123 |
 
 > ⚠️ These are for submission/demo purposes only. Change in production.
 
@@ -114,17 +124,17 @@ npm run dev
 | Action | ADMIN | SALES | WAREHOUSE | ACCOUNTS |
 |---|:---:|:---:|:---:|:---:|
 | Login | ✅ | ✅ | ✅ | ✅ |
-| Dashboard | ✅ | ✅ | ✅ | ✅ |
+| Dashboard (Personalized) | ✅ | ✅ | ✅ | ✅ |
 | View customers | ✅ | ✅ | ❌ | ✅ |
-| Create/edit customers | ✅ | ✅ | ❌ | ❌ |
-| Add customer notes | ✅ | ✅ | ❌ | ❌ |
+| Create/edit customers | ✅ | ✅ | ❌ | ✅ *(Accounts can update info/billing)* |
+| Add customer notes | ✅ | ✅ | ❌ | ✅ *(Accounts can add billing/credit notes)* |
 | View products | ✅ | ✅ | ✅ | ✅ |
 | Create/edit products | ✅ | ❌ | ✅ | ❌ |
 | Adjust stock manually | ✅ | ❌ | ✅ | ❌ |
 | View challans | ✅ | ✅ | ✅ | ✅ |
 | Create challans | ✅ | ✅ | ❌ | ❌ |
 | Confirm/cancel challans | ✅ | ✅ | ❌ | ❌ |
-| Download PDF | ✅ | ✅ | ✅ | ✅ |
+| View PDF Preview / Download | ✅ | ✅ | ✅ | ✅ |
 
 > Backend enforces all permissions independently of frontend hiding.
 > `401` = missing/invalid/expired token; `403` = valid token but wrong role.

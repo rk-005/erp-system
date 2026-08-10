@@ -30,17 +30,19 @@ export const authenticate = (
   next: NextFunction
 ): void => {
   const authHeader = req.headers.authorization;
+  let token: string | undefined;
 
-  // 1. Ensure Authorization header exists and is Bearer format
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    sendError(res, 401, 'Authentication required. Provide a Bearer token.', 'MISSING_TOKEN');
-    return;
+  // 1. Check Authorization header
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    token = authHeader.slice(7); // Remove "Bearer " prefix
+  } 
+  // 1.5 Fallback to query param for file downloads (like PDFs)
+  else if (req.query.token && typeof req.query.token === 'string') {
+    token = req.query.token;
   }
 
-  const token = authHeader.slice(7); // Remove "Bearer " prefix
-
   if (!token || token.trim() === '') {
-    sendError(res, 401, 'Authentication token is empty.', 'EMPTY_TOKEN');
+    sendError(res, 401, 'Authentication required. Provide a Bearer token or token parameter.', 'MISSING_TOKEN');
     return;
   }
 

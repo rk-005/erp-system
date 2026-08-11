@@ -165,13 +165,16 @@ export const LoginPage: React.FC = () => {
 
           {/* Quick login shortcuts */}
           <div className="mt-8">
-            <div className="flex items-center gap-2 mb-4">
+            <div className="flex items-center gap-2 mb-3">
               <div className="flex-1 h-px bg-border" />
               <span className="text-xs text-muted-foreground flex items-center gap-1">
                 <Zap className="w-3 h-3" /> Quick login (demo)
               </span>
               <div className="flex-1 h-px bg-border" />
             </div>
+            <p className="text-xs text-red-500/90 text-center mb-3">
+              Click on any role below to autofill credentials for testing
+            </p>
             <div className="grid grid-cols-2 gap-2">
               {['admin', 'sales', 'warehouse', 'accounts'].map((role) => (
                 <button

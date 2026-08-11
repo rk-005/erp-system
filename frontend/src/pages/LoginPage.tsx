@@ -187,7 +187,7 @@ export const LoginPage: React.FC = () => {
                 </button>
               ))}
             </div>
-            <p className="text-[11px] text-muted-foreground/80 text-center leading-tight">
+            <p className="text-[11px] text-red-500/90 text-center leading-tight">
               Note: The backend is hosted on a free tier. If you get a timeout on your first login, the server is waking up. Please wait 30 seconds and try again!
             </p>
           </div>

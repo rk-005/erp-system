@@ -86,7 +86,9 @@ A production-quality mini ERP + CRM system for wholesale/distribution companies.
 /backend          Express + TypeScript + Prisma API
 /frontend         React + TypeScript + Vite SPA
 /.github/workflows  CI/CD GitHub Actions
-/postman          Postman collection (exported)
+/postman          Postman collection (ERP_Portal_API.postman_collection.json)
+/screenshots      Real screenshots from the live application
+docker-compose.yml
 README.md
 ```
 
@@ -199,7 +201,8 @@ The system automatically initializes and configures environment connections.
 
 ## 📡 API Reference
 
-Base URL: `http://localhost:5000/api` (dev) or your Render URL (prod)
+Base URL (Production): `https://erp-backend-yazz.onrender.com/api`  
+Base URL (Local dev): `http://localhost:5000/api`
 
 ### Authentication
 All endpoints except `POST /auth/login` require `Authorization: Bearer <token>`.
@@ -212,12 +215,12 @@ All endpoints except `POST /auth/login` require `Authorization: Bearer <token>`.
 ### Customers
 | Method | Endpoint | Roles | Description |
 |---|---|---|---|
-| GET | `/customers` | All (excl. WAREHOUSE) | List with search/filter/pagination |
-| POST | `/customers` | ADMIN, SALES | Create customer |
-| GET | `/customers/:id` | All (excl. WAREHOUSE) | Customer detail |
-| PATCH | `/customers/:id` | ADMIN, SALES | Update customer |
-| GET | `/customers/:id/notes` | All (excl. WAREHOUSE) | Get notes |
-| POST | `/customers/:id/notes` | ADMIN, SALES | Add note |
+| GET | `/customers` | ADMIN, SALES, ACCOUNTS | List with search/filter/pagination |
+| POST | `/customers` | ADMIN, SALES, ACCOUNTS | Create customer |
+| GET | `/customers/:id` | ADMIN, SALES, ACCOUNTS | Customer detail |
+| PATCH | `/customers/:id` | ADMIN, SALES, ACCOUNTS | Update customer |
+| GET | `/customers/:id/notes` | ADMIN, SALES, ACCOUNTS | Get notes |
+| POST | `/customers/:id/notes` | ADMIN, SALES, ACCOUNTS | Add note |
 
 ### Products
 | Method | Endpoint | Roles | Description |
@@ -332,7 +335,17 @@ Test coverage includes:
 
 ## 📚 API Documentation
 
-Postman collection: see `/postman/` directory in this repo.
+Import the Postman collection into Postman:
+```
+postman/ERP_Portal_API.postman_collection.json
+```
+
+The collection includes:
+- All 17 endpoints across Auth, Customers, Products, Stock Movements, and Challans
+- Pre-configured `{{base_url}}` and `{{token}}` collection variables
+- Automatic token saving after login (via test script)
+- Sample request bodies for every POST/PATCH endpoint
+- Inline descriptions for every endpoint
 
 ---
 

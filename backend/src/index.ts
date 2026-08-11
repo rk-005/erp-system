@@ -40,7 +40,24 @@ app.use(
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// ─── Health Check ─────────────────────────────────────────────────────────────
+// ─── Root & Health Check ───────────────────────────────────────────────────────
+app.get('/', (_req, res) => {
+  res.json({
+    name: 'ERP Operations Portal Backend API',
+    status: 'online',
+    version: '1.0.0',
+    documentation: 'https://github.com/rk-005/erp-system',
+    endpoints: {
+      health: '/health',
+      auth: '/api/auth',
+      customers: '/api/customers',
+      products: '/api/products',
+      stockMovements: '/api/stock-movements',
+      challans: '/api/challans',
+    },
+  });
+});
+
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });

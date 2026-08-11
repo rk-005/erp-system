@@ -4,6 +4,7 @@ A production-quality mini ERP + CRM system for wholesale/distribution companies.
 
 [![CI/CD](https://github.com/rk-005/erp-system/actions/workflows/deploy.yml/badge.svg)](https://github.com/rk-005/erp-system/actions)
 
+
 ## 🌐 Live Deployment
 
 | | URL |
@@ -11,6 +12,26 @@ A production-quality mini ERP + CRM system for wholesale/distribution companies.
 | **Frontend** | https://erp-system-coral.vercel.app |
 | **Backend API** | https://erp-backend-yazz.onrender.com/api |
 | **GitHub** | https://github.com/rk-005/erp-system |
+
+---
+
+## 📸 Screenshots
+
+| Login Page | Admin Dashboard |
+|:---:|:---:|
+| ![Login](screenshots/01_login.png) | ![Dashboard](screenshots/02_dashboard_admin.png) |
+
+| Customers CRM | Products & Inventory |
+|:---:|:---:|
+| ![Customers](screenshots/03_customers.png) | ![Products](screenshots/04_products.png) |
+
+| Sales Challans | Warehouse / Stock Movements |
+|:---:|:---:|
+| ![Challans](screenshots/05_challans.png) | ![Warehouse](screenshots/06_warehouse.png) |
+
+| Sales Role View | Accounts Role View |
+|:---:|:---:|
+| ![Sales](screenshots/07_dashboard_sales.png) | ![Accounts](screenshots/08_dashboard_accounts.png) |
 
 ---
 

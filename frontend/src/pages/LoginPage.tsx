@@ -175,7 +175,7 @@ export const LoginPage: React.FC = () => {
             <p className="text-xs text-red-500/90 text-center mb-3">
               Click on any role below to autofill credentials for testing
             </p>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-2 mb-3">
               {['admin', 'sales', 'warehouse', 'accounts'].map((role) => (
                 <button
                   key={role}
@@ -187,6 +187,9 @@ export const LoginPage: React.FC = () => {
                 </button>
               ))}
             </div>
+            <p className="text-[11px] text-muted-foreground/80 text-center leading-tight">
+              Note: The backend is hosted on a free tier. If you get a timeout on your first login, the server is waking up. Please wait 30 seconds and try again!
+            </p>
           </div>
         </div>
       </div>

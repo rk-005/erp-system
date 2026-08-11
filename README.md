@@ -160,6 +160,8 @@ The system automatically initializes and configures environment connections.
 | **ACCOUNTS** | accounts@erp.local | Accounts@123 |
 
 > ⚠️ These are for submission/demo purposes only. Change in production.
+> 
+> **Note on Free Tier Hosting:** The backend API is hosted on Render's free tier, which spins down after 15 minutes of inactivity. If you experience a timeout or "Network Error" on your very first login attempt, please wait 30-50 seconds for the server to wake up and try again.
 
 ---
 

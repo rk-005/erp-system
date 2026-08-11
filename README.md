@@ -4,6 +4,14 @@ A production-quality mini ERP + CRM system for wholesale/distribution companies.
 
 [![CI/CD](https://github.com/rk-005/erp-system/actions/workflows/deploy.yml/badge.svg)](https://github.com/rk-005/erp-system/actions)
 
+## 🌐 Live Deployment
+
+| | URL |
+|---|---|
+| **Frontend** | https://erp-system-coral.vercel.app |
+| **Backend API** | https://erp-backend-yazz.onrender.com/api |
+| **GitHub** | https://github.com/rk-005/erp-system |
+
 ---
 
 ## 🏗 Architecture

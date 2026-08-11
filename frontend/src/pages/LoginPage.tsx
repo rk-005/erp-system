@@ -14,8 +14,6 @@ export const LoginPage: React.FC = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/dashboard';
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
@@ -27,7 +25,10 @@ export const LoginPage: React.FC = () => {
     try {
       await login(email, password);
       toast.success('Welcome back!');
-      navigate(from, { replace: true });
+      // Always go to /dashboard — it's accessible by all roles and personalised per role.
+      // Never blindly redirect to `from` because it might be a role-restricted page
+      // (e.g. /warehouse for a SALES user) causing an immediate Access Denied screen.
+      navigate('/dashboard', { replace: true });
     } catch (err) {
       toast.error(getErrorMessage(err));
     } finally {

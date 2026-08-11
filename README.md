@@ -15,25 +15,47 @@ A production-quality mini ERP + CRM system for wholesale/distribution companies.
 
 ---
 
-## 📸 Screenshots
 
+## 📸 Screenshots & Workflow
+
+### 🔑 Authentication & Role Dashboards
 | Login Page | Admin Dashboard |
 |:---:|:---:|
-| ![Login](screenshots/01_login.png) | ![Dashboard](screenshots/02_dashboard_admin.png) |
-
-| Customers CRM | Products & Inventory |
-|:---:|:---:|
-| ![Customers](screenshots/03_customers.png) | ![Products](screenshots/04_products.png) |
-
-| Sales Challans | Warehouse / Stock Movements |
-|:---:|:---:|
-| ![Challans](screenshots/05_challans.png) | ![Warehouse](screenshots/06_warehouse.png) |
+| ![Login](screenshots/01_login.png) | ![Admin Dashboard](screenshots/02_dashboard_admin.png) |
 
 | Sales Role View | Accounts Role View |
 |:---:|:---:|
-| ![Sales](screenshots/07_dashboard_sales.png) | ![Accounts](screenshots/08_dashboard_accounts.png) |
+| ![Sales Dashboard](screenshots/07_dashboard_sales.png) | ![Accounts Dashboard](screenshots/08_dashboard_accounts.png) |
+
+### 👥 Customer CRM & 📦 Product Management
+| Customers List | Add Customer Modal |
+|:---:|:---:|
+| ![Customers](screenshots/03_customers.png) | ![Add Customer](screenshots/09_add_customer_modal.png) |
+
+| Products List | Add Product Modal |
+|:---:|:---:|
+| ![Products](screenshots/04_products.png) | ![Add Product](screenshots/10_add_product_modal.png) |
+
+### 📋 Sales Challans & PDF Export Workflow
+| New Challan Creation | Draft Challan Detail |
+|:---:|:---:|
+| ![New Challan](screenshots/11_new_challan.png) | ![Draft Challan](screenshots/12_challan_draft_detail.png) |
+
+| Confirmed Challan (Stock Deducted) | PDF Export & Preview Modal |
+|:---:|:---:|
+| ![Confirmed Challan](screenshots/13_challan_confirmed_detail.png) | ![PDF Preview](screenshots/14_pdf_preview_modal.png) |
+
+| Cancelled Challan (Stock Restored) | |
+|:---:|:---:|
+| ![Cancelled Challan](screenshots/15_challan_cancelled_detail.png) | |
+
+### 🏬 Warehouse Operations & Stock Adjustments
+| Stock Movement Audit Log | Adjust Stock Manually Modal |
+|:---:|:---:|
+| ![Warehouse Logs](screenshots/06_warehouse.png) | ![Adjust Stock Modal](screenshots/16_adjust_stock_modal.png) |
 
 ---
+
 
 ## 🏗 Architecture
 

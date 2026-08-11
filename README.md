@@ -62,24 +62,32 @@ A production-quality mini ERP + CRM system for wholesale/distribution companies.
 ---
 
 
-## 🏗 Architecture
+## 🏗 Architecture & Tech Stack
 
+The application follows a modern, decoupled client-server architecture:
+
+```mermaid
+graph TD
+    Client["💻 Frontend (Vercel)<br/>React, TypeScript, Tailwind, Vite"]
+    Server["⚙️ Backend API (Render)<br/>Node.js, Express, TypeScript, Prisma"]
+    DB["🗄️ Database (Neon)<br/>Serverless PostgreSQL"]
+
+    Client -- "HTTPS / REST API" --> Server
+    Server -- "Prisma ORM / Connection Pooling" --> DB
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                        Frontend (Vercel)                     │
-│     React + TypeScript + Vite + Tailwind CSS + shadcn/ui    │
-└───────────────────────────┬─────────────────────────────────┘
-                            │ HTTPS / REST API
-┌───────────────────────────▼─────────────────────────────────┐
-│                        Backend (Render)                      │
-│            Node.js + Express + TypeScript + Prisma           │
-└───────────────────────────┬─────────────────────────────────┘
-                            │ TLS / PostgreSQL
-┌───────────────────────────▼─────────────────────────────────┐
-│                    Database (Neon Postgres)                   │
-│                  Serverless PostgreSQL (AWS us-west-2)       │
-└─────────────────────────────────────────────────────────────┘
-```
+
+### 1. Frontend (Vercel)
+A Single Page Application (SPA) built with **React** and **TypeScript**. It uses **Tailwind CSS** for clean, responsive styling. It is responsible for role-based UI rendering, state management, and making API calls to the backend.
+
+### 2. Backend API (Render)
+A RESTful API server built with **Node.js** and **Express**. It handles:
+- **Authentication:** Verifying JWT tokens.
+- **Authorization:** Enforcing role-based access (e.g., stopping Sales from adjusting warehouse stock).
+- **Business Logic:** Managing complex transactions like atomic stock reduction when a challan is confirmed.
+- **PDF Generation:** Creating invoice PDFs on the fly.
+
+### 3. Database (Neon)
+A serverless **PostgreSQL** database hosted on AWS. The backend communicates with it using **Prisma ORM**, which provides safe, strongly-typed database queries and handles schema migrations.
 
 **Monorepo structure:**
 ```

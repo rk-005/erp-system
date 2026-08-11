@@ -1,0 +1,459 @@
+{
+  "info": {
+    "name": "ERP Operations Portal API",
+    "_postman_id": "erp-portal-v1",
+    "description": "Complete REST API collection for the ERP + CRM Operations Portal.\n\n**Base URL:** `https://erp-backend-yazz.onrender.com/api`\n\n**Auth:** All endpoints (except `/auth/login`) require `Authorization: Bearer <token>` header.\n\n**Test Credentials:**\n- Admin: `admin@erp.local` / `Admin@123`\n- Sales: `sales@erp.local` / `Sales@123`\n- Warehouse: `warehouse@erp.local` / `Warehouse@123`\n- Accounts: `accounts@erp.local` / `Accounts@123`",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://erp-backend-yazz.onrender.com/api",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "🔐 Auth",
+      "item": [
+        {
+          "name": "Login (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.data && json.data.token) {",
+                  "  pm.collectionVariables.set('token', json.data.token);",
+                  "  console.log('Token saved:', json.data.token.substring(0, 20) + '...');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@erp.local\",\n  \"password\": \"Admin@123\"\n}"
+            },
+            "url": "{{base_url}}/auth/login",
+            "description": "Login as Admin. The token is automatically saved to the `token` collection variable."
+          }
+        },
+        {
+          "name": "Login (Sales)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.data && json.data.token) pm.collectionVariables.set('token', json.data.token);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"sales@erp.local\",\n  \"password\": \"Sales@123\"\n}"
+            },
+            "url": "{{base_url}}/auth/login"
+          }
+        },
+        {
+          "name": "Login (Warehouse)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"warehouse@erp.local\",\n  \"password\": \"Warehouse@123\"\n}"
+            },
+            "url": "{{base_url}}/auth/login"
+          }
+        },
+        {
+          "name": "Login (Accounts)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"accounts@erp.local\",\n  \"password\": \"Accounts@123\"\n}"
+            },
+            "url": "{{base_url}}/auth/login"
+          }
+        },
+        {
+          "name": "Get Current User (Me)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/auth/me"
+          }
+        }
+      ]
+    },
+    {
+      "name": "👥 Customers",
+      "item": [
+        {
+          "name": "List Customers",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{base_url}}/customers?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["customers"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" },
+                { "key": "search", "value": "", "disabled": true },
+                { "key": "status", "value": "ACTIVE", "disabled": true },
+                { "key": "customerType", "value": "WHOLESALE", "disabled": true }
+              ]
+            },
+            "description": "List customers with pagination. Optional filters: `search` (name/mobile/email/businessName), `status` (LEAD/ACTIVE/INACTIVE), `customerType` (RETAIL/WHOLESALE/DISTRIBUTOR)."
+          }
+        },
+        {
+          "name": "Create Customer",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Rajesh Kumar\",\n  \"mobile\": \"9876543210\",\n  \"email\": \"rajesh@example.com\",\n  \"businessName\": \"Kumar Traders\",\n  \"gstNumber\": \"27AABCK1234Z1Z5\",\n  \"customerType\": \"WHOLESALE\",\n  \"address\": \"123 MG Road, Mumbai, Maharashtra 400001\",\n  \"status\": \"ACTIVE\",\n  \"followUpDate\": \"2026-09-01T00:00:00.000Z\"\n}"
+            },
+            "url": "{{base_url}}/customers",
+            "description": "Create a new customer. Roles: ADMIN, SALES, ACCOUNTS."
+          }
+        },
+        {
+          "name": "Get Customer Detail",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/customers/:id",
+            "variable": [{ "key": "id", "value": "CUSTOMER_ID_HERE" }]
+          }
+        },
+        {
+          "name": "Update Customer",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"ACTIVE\",\n  \"followUpDate\": \"2026-09-15T00:00:00.000Z\"\n}"
+            },
+            "url": "{{base_url}}/customers/:id",
+            "variable": [{ "key": "id", "value": "CUSTOMER_ID_HERE" }]
+          }
+        },
+        {
+          "name": "Get Customer Notes",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/customers/:id/notes",
+            "variable": [{ "key": "id", "value": "CUSTOMER_ID_HERE" }]
+          }
+        },
+        {
+          "name": "Add Customer Note",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"note\": \"Customer interested in bulk order of hydraulic equipment. Follow up next week.\"\n}"
+            },
+            "url": "{{base_url}}/customers/:id/notes",
+            "variable": [{ "key": "id", "value": "CUSTOMER_ID_HERE" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "📦 Products",
+      "item": [
+        {
+          "name": "List Products",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{base_url}}/products?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["products"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" },
+                { "key": "search", "value": "", "disabled": true },
+                { "key": "category", "value": "", "disabled": true },
+                { "key": "lowStock", "value": "true", "disabled": true }
+              ]
+            },
+            "description": "List products with pagination. Optional: `search` (name/sku/category), `category`, `lowStock=true` for stock alerts."
+          }
+        },
+        {
+          "name": "Get Low Stock Products",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/products/low-stock",
+            "description": "Returns products where currentStock <= minStockAlert."
+          }
+        },
+        {
+          "name": "Create Product",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Control Panel Box 400x300\",\n  \"sku\": \"CTRL-BOX-43\",\n  \"category\": \"Electrical\",\n  \"unitPrice\": 2200.00,\n  \"currentStock\": 50,\n  \"minStockAlert\": 10,\n  \"warehouseLocation\": \"A-2 Shelf 3\"\n}"
+            },
+            "url": "{{base_url}}/products",
+            "description": "Create a new product. Roles: ADMIN, WAREHOUSE."
+          }
+        },
+        {
+          "name": "Get Product Detail",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/products/:id",
+            "variable": [{ "key": "id", "value": "PRODUCT_ID_HERE" }],
+            "description": "Returns product detail with last 50 stock movements."
+          }
+        },
+        {
+          "name": "Update Product",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"unitPrice\": 2500.00,\n  \"minStockAlert\": 15\n}"
+            },
+            "url": "{{base_url}}/products/:id",
+            "variable": [{ "key": "id", "value": "PRODUCT_ID_HERE" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "📊 Stock Movements",
+      "item": [
+        {
+          "name": "List Stock Movements",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{base_url}}/stock-movements?page=1&limit=20",
+              "host": ["{{base_url}}"],
+              "path": ["stock-movements"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" },
+                { "key": "productId", "value": "", "disabled": true },
+                { "key": "movementType", "value": "OUT", "disabled": true }
+              ]
+            },
+            "description": "List all stock movements with pagination. Filter by `productId` or `movementType` (IN/OUT)."
+          }
+        },
+        {
+          "name": "Manual Stock Adjustment",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": \"PRODUCT_ID_HERE\",\n  \"quantityChanged\": 20,\n  \"movementType\": \"IN\",\n  \"reason\": \"Purchase order received from supplier\"\n}"
+            },
+            "url": "{{base_url}}/stock-movements",
+            "description": "Manually adjust stock. `movementType`: IN or OUT. For OUT, validates stock won't go negative. Roles: ADMIN, WAREHOUSE."
+          }
+        }
+      ]
+    },
+    {
+      "name": "📋 Challans",
+      "item": [
+        {
+          "name": "List Challans",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{base_url}}/challans?page=1&limit=15",
+              "host": ["{{base_url}}"],
+              "path": ["challans"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "15" },
+                { "key": "status", "value": "CONFIRMED", "disabled": true },
+                { "key": "customerId", "value": "", "disabled": true },
+                { "key": "from", "value": "2026-01-01", "disabled": true },
+                { "key": "to", "value": "2026-12-31", "disabled": true }
+              ]
+            },
+            "description": "List challans with pagination. Filter by `status` (DRAFT/CONFIRMED/CANCELLED), `customerId`, date range (`from`/`to`)."
+          }
+        },
+        {
+          "name": "Create Challan (DRAFT)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerId\": \"CUSTOMER_ID_HERE\",\n  \"status\": \"DRAFT\",\n  \"items\": [\n    {\n      \"productId\": \"PRODUCT_ID_HERE\",\n      \"quantity\": 5\n    },\n    {\n      \"productId\": \"ANOTHER_PRODUCT_ID\",\n      \"quantity\": 2\n    }\n  ]\n}"
+            },
+            "url": "{{base_url}}/challans",
+            "description": "Create a new challan. Status can be DRAFT (no stock deduction) or CONFIRMED (atomic stock deduction). Challan number is auto-generated. Product snapshot data is stored. Roles: ADMIN, SALES."
+          }
+        },
+        {
+          "name": "Create Challan (CONFIRMED — Direct)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerId\": \"CUSTOMER_ID_HERE\",\n  \"status\": \"CONFIRMED\",\n  \"items\": [\n    {\n      \"productId\": \"PRODUCT_ID_HERE\",\n      \"quantity\": 3\n    }\n  ]\n}"
+            },
+            "url": "{{base_url}}/challans",
+            "description": "Create and immediately confirm a challan. Stock is atomically deducted. Returns 409 if any product has insufficient stock."
+          }
+        },
+        {
+          "name": "Get Challan Detail",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/challans/:id",
+            "variable": [{ "key": "id", "value": "CHALLAN_ID_HERE" }],
+            "description": "Returns full challan with items (including productSnapshot), customer, and creator details."
+          }
+        },
+        {
+          "name": "Update Challan (DRAFT only)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [\n    {\n      \"productId\": \"PRODUCT_ID_HERE\",\n      \"quantity\": 10\n    }\n  ]\n}"
+            },
+            "url": "{{base_url}}/challans/:id",
+            "variable": [{ "key": "id", "value": "CHALLAN_ID_HERE" }],
+            "description": "Update a DRAFT challan's items. Returns 422 if challan is already CONFIRMED or CANCELLED."
+          }
+        },
+        {
+          "name": "Confirm Challan",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/challans/:id/confirm",
+            "variable": [{ "key": "id", "value": "CHALLAN_ID_HERE" }],
+            "description": "Confirm a DRAFT challan. Atomically deducts stock for all items. Returns 409 INSUFFICIENT_STOCK with `insufficientItems` array if any product has insufficient stock. No partial updates — all or nothing."
+          }
+        },
+        {
+          "name": "Cancel Challan",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base_url}}/challans/:id/cancel",
+            "variable": [{ "key": "id", "value": "CHALLAN_ID_HERE" }],
+            "description": "Cancel a challan. If it was CONFIRMED, stock is restored (IN movement created). If it was DRAFT, no stock change."
+          }
+        },
+        {
+          "name": "Download Challan PDF",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{base_url}}/challans/:id/pdf?token={{token}}",
+              "host": ["{{base_url}}"],
+              "path": ["challans", ":id", "pdf"],
+              "query": [{ "key": "token", "value": "{{token}}" }]
+            },
+            "variable": [{ "key": "id", "value": "CHALLAN_ID_HERE" }],
+            "description": "Download challan as PDF. Accepts token via `Authorization` header OR `?token=` query param (for browser window.open). Cancelled challans include a 'CANCELLED' watermark."
+          }
+        }
+      ]
+    },
+    {
+      "name": "🏥 Health",
+      "item": [
+        {
+          "name": "Root / API Info",
+          "request": {
+            "method": "GET",
+            "url": "https://erp-backend-yazz.onrender.com",
+            "description": "Returns API name, status, version, and endpoint list."
+          }
+        },
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "url": "https://erp-backend-yazz.onrender.com/health",
+            "description": "Returns `{\"status\":\"ok\",\"timestamp\":\"...\"}`"
+          }
+        }
+      ]
+    }
+  ]
+}

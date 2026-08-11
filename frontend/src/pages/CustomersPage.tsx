@@ -12,7 +12,9 @@ interface Customer {
   mobile: string;
   email: string | null;
   businessName: string;
+  gstNumber?: string | null;
   customerType: 'RETAIL' | 'WHOLESALE' | 'DISTRIBUTOR';
+  address?: string;
   status: 'LEAD' | 'ACTIVE' | 'INACTIVE';
   followUpDate: string | null;
   createdAt: string;
@@ -69,9 +71,9 @@ const CustomerModal: React.FC<{
         mobile: customer.mobile,
         email: customer.email || '',
         businessName: customer.businessName,
-        gstNumber: '',
+        gstNumber: customer.gstNumber || '',
         customerType: customer.customerType,
-        address: '',
+        address: customer.address || '',
         status: customer.status,
         followUpDate: customer.followUpDate ? customer.followUpDate.split('T')[0] : '',
       });
@@ -182,6 +184,17 @@ export const CustomersPage: React.FC = () => {
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
 
   const canWrite = isRole('ADMIN', 'SALES', 'ACCOUNTS');
+
+  // Fetch full customer detail before opening edit modal so address + gstNumber are populated
+  const openEditModal = useCallback(async (c: Customer) => {
+    try {
+      const res = await api.get(`/customers/${c.id}`);
+      setEditingCustomer(res.data.data);
+    } catch {
+      setEditingCustomer(c); // fallback to list data
+    }
+    setModalOpen(true);
+  }, []);
   const LIMIT = 15;
 
   const fetchCustomers = useCallback(async () => {
@@ -283,7 +296,7 @@ export const CustomersPage: React.FC = () => {
                   <tr
                     key={customer.id}
                     className="border-b border-border/30 table-row-hover"
-                    onClick={() => canWrite && (setEditingCustomer(customer), setModalOpen(true))}
+                    onClick={() => canWrite && openEditModal(customer)}
                   >
                     <td className="p-4">
                       <div className="flex items-center gap-3">

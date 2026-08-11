@@ -49,6 +49,11 @@ A production-quality mini ERP + CRM system for wholesale/distribution companies.
 |:---:|:---:|
 | ![Cancelled Challan](screenshots/15_challan_cancelled_detail.png) | |
 
+### 📄 Exported PDF Invoices (Confirmed & Cancelled with Watermark)
+| Confirmed PDF Invoice | Cancelled PDF Invoice (Watermarked) |
+|:---:|:---:|
+| ![Confirmed PDF Invoice](screenshots/pdf_confirmed.png) | ![Cancelled PDF Invoice](screenshots/pdf_cancelled.png) |
+
 ### 🏬 Warehouse Operations & Stock Adjustments
 | Stock Movement Audit Log | Adjust Stock Manually Modal |
 |:---:|:---:|
